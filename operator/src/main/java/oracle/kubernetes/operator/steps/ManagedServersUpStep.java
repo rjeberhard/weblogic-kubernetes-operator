@@ -41,8 +41,17 @@ public class ManagedServersUpStep extends Step {
       (info, config, servers, next) ->
           scaleDownIfNecessary(info, config, servers, new ClusterServicesStep(next));
 
+  protected boolean serviceOnly;
+
   public ManagedServersUpStep(Step next) {
     super(next);
+  }
+
+  public static class ManagedServerServiceOnlyStep extends ManagedServersUpStep {
+    public ManagedServerServiceOnlyStep(Step next) {
+      super(next);
+      this.serviceOnly = true;
+    }
   }
 
   public static Collection<String> getRunningServers(DomainPresenceInfo info) {
@@ -95,10 +104,8 @@ public class ManagedServersUpStep extends Step {
     DomainPresenceInfo info = packet.getSpi(DomainPresenceInfo.class);
     WlsDomainConfig config = (WlsDomainConfig) packet.get(ProcessingConstants.DOMAIN_TOPOLOGY);
 
-    ServersUpStepFactory servicesOnlyFactory = new ServersUpStepFactory(config, info.getDomain());
-    servicesOnlyFactory.serviceOnly = true;
-
     ServersUpStepFactory factory = new ServersUpStepFactory(config, info.getDomain());
+    factory.serviceOnly = serviceOnly;
 
     if (LOGGER.isFineEnabled()) {
       LOGGER.fine(SERVERS_UP_MSG, factory.domain.getDomainUid(), getRunningServers(info));
@@ -110,7 +117,6 @@ public class ManagedServersUpStep extends Step {
       factory.logIfReplicasExceedsClusterServersMax(clusterConfig);
       for (WlsServerConfig serverConfig : clusterConfig.getServerConfigs()) {
         factory.addServerIfNeeded(serverConfig, clusterConfig);
-        servicesOnlyFactory.addServerIfNeeded(serverConfig, clusterConfig);
         clusteredServers.add(serverConfig.getName());
       }
     }
@@ -118,18 +124,20 @@ public class ManagedServersUpStep extends Step {
     for (WlsServerConfig serverConfig : config.getServerConfigs().values()) {
       if (!clusteredServers.contains(serverConfig.getName())) {
         factory.addServerIfNeeded(serverConfig, null);
-        servicesOnlyFactory.addServerIfNeeded(serverConfig, null);
       }
     }
 
     info.setServerStartupInfo(factory.getStartupInfos());
     LOGGER.exiting();
 
-    return doNext(
-         NEXT_STEP_FACTORY.createServerStep(
-            info, config, factory.servers,
-             servicesOnlyFactory.createNextStep(factory.createNextStep(getNext()))),
+    if (serviceOnly) {
+      return doNext(factory.createNextStep(getNext()), packet);
+    } else {
+      return doNext(
+          NEXT_STEP_FACTORY.createServerStep(
+              info, config, factory.servers, factory.createNextStep(getNext())),
           packet);
+    }
   }
 
   // an interface to provide a hook for unit testing.

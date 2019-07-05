@@ -43,6 +43,7 @@ import oracle.kubernetes.operator.steps.BeforeAdminServiceStep;
 import oracle.kubernetes.operator.steps.DeleteDomainStep;
 import oracle.kubernetes.operator.steps.DomainPresenceStep;
 import oracle.kubernetes.operator.steps.ManagedServersUpStep;
+import oracle.kubernetes.operator.steps.ManagedServersUpStep.ManagedServerServiceOnlyStep;
 import oracle.kubernetes.operator.steps.WatchPodReadyAdminStep;
 import oracle.kubernetes.operator.work.Component;
 import oracle.kubernetes.operator.work.Fiber;
@@ -173,7 +174,7 @@ public class DomainProcessorImpl implements DomainProcessor {
     }
 
     resources.add(ServiceHelper.createForServerStep(null));
-    resources.add(new WatchPodReadyAdminStep(podAwaiterStepFactory, next));
+    resources.add(new ManagedServerServiceOnlyStep(new WatchPodReadyAdminStep(podAwaiterStepFactory, next)));
     return resources.toArray(new Step[0]);
   }
 
