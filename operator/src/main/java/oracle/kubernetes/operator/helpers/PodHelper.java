@@ -70,13 +70,41 @@ public class PodHelper {
           for (V1PodCondition cond : conds) {
             if ("Ready".equals(cond.getType())) {
               if ("True".equals(cond.getStatus())) {
+                LOGGER.info(
+                    "zzzz- getReadyStatus(serverName="
+                        + getPodServerName(pod)
+                        + ") returning true");
                 return true;
               }
             }
           }
+        } else {
+          LOGGER.info(
+              "zzzz- getReadyStatus(serverName="
+                  + getPodServerName(pod)
+                  + ") has null conditions! Returning false");
         }
+      } else {
+        LOGGER.info(
+            "zzzz- getReadyStatus(serverName="
+                + getPodServerName(pod)
+                + ") has phase="
+                + status.getPhase()
+                + ". Returning false");
       }
+    } else {
+      LOGGER.info(
+          "zzzz- getReadyStatus(serverName="
+              + getPodServerName(pod)
+              + ") has null status! returning false");
+      return false;
     }
+    LOGGER.info(
+        "zzzz- getReadyStatus(serverName="
+            + getPodServerName(pod)
+            + ") has no condition out of "
+            + (status.getConditions() == null ? "<null>" : status.getConditions().size())
+            + " conditions that matches Ready type and True status. Returning false");
     return false;
   }
 

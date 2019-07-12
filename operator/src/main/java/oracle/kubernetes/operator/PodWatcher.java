@@ -209,7 +209,17 @@ public class PodWatcher extends Watcher<V1Pod>
 
     @Override
     public NextAction apply(Packet packet) {
+      LOGGER.entering();
+      LOGGER.info(
+          "zzz- WaitForPodStatusStep.apply(serverName="
+              + PodHelper.getPodServerName(pod)
+              + "), PodHelper.isDeleting(pod) is "
+              + PodHelper.isDeleting(pod)
+              + ", PodHelper.getReadyStatus(pod) is "
+              + PodHelper.getReadyStatus(pod));
+
       if (!PodHelper.isDeleting(pod) && PodHelper.getReadyStatus(pod)) {
+        LOGGER.exiting("doNext() " + getNext());
         return doNext(packet);
       }
 
@@ -217,7 +227,8 @@ public class PodWatcher extends Watcher<V1Pod>
 
       log(metadata);
 
-      AtomicBoolean didResume = new AtomicBoolean(false);
+      final AtomicBoolean didResume = new AtomicBoolean(false);
+      LOGGER.exiting("doSuspend(), didResume is " + didResume);
       return doSuspend(
           (fiber) -> {
             Runnable ready =
@@ -246,6 +257,8 @@ public class PodWatcher extends Watcher<V1Pod>
                                   ApiException e,
                                   int statusCode,
                                   Map<String, List<String>> responseHeaders) {
+                                LOGGER.entering();
+                                LOGGER.info("zzz- onFailure() statusCode is " + statusCode);
                                 if (statusCode == CallBuilder.NOT_FOUND) {
                                   return onSuccess(packet, null, statusCode, responseHeaders);
                                 }
@@ -258,12 +271,18 @@ public class PodWatcher extends Watcher<V1Pod>
                                   V1Pod result,
                                   int statusCode,
                                   Map<String, List<String>> responseHeaders) {
+                                LOGGER.entering();
                                 if (testPod(result)) {
                                   if (didResume.compareAndSet(false, true)) {
                                     unregister(metadata, ready);
+                                    LOGGER.exiting("fiber.resume(packet)");
                                     fiber.resume(packet);
                                   }
+                                  LOGGER.info(
+                                      "zzz- WaitForPodStatusStep$ResponseStep didResume is "
+                                          + didResume);
                                 }
+                                LOGGER.exiting("doNext(packet) " + getNext());
                                 return doNext(packet);
                               }
                             }),
@@ -295,6 +314,15 @@ public class PodWatcher extends Watcher<V1Pod>
 
     @Override
     protected boolean testPod(V1Pod result) {
+      if (result != null) {
+        LOGGER.info(
+            "zzz- PodWatcher.testPod(serverName="
+                + PodHelper.getPodServerName(result)
+                + "), PodHelper.isDeleting(pod) is "
+                + PodHelper.isDeleting(result)
+                + ", PodHelper.getReadyStatus(pod) is "
+                + PodHelper.getReadyStatus(result));
+      }
       return result != null && !PodHelper.isDeleting(result) && PodHelper.getReadyStatus(result);
     }
 
