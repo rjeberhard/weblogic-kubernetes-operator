@@ -228,7 +228,7 @@ public class PodWatcher extends Watcher<V1Pod>
       log(metadata);
 
       final AtomicBoolean didResume = new AtomicBoolean(false);
-      LOGGER.exiting("doSuspend(), didResume is " + didResume);
+      LOGGER.info("zzzpw- returning doSuspend(), didResume is " + didResume);
       return doSuspend(
           (fiber) -> {
             Runnable ready =
@@ -258,7 +258,7 @@ public class PodWatcher extends Watcher<V1Pod>
                                   int statusCode,
                                   Map<String, List<String>> responseHeaders) {
                                 LOGGER.entering();
-                                LOGGER.info("zzz- onFailure() statusCode is " + statusCode);
+                                LOGGER.info("zzzpw- onFailure() statusCode is " + statusCode);
                                 if (statusCode == CallBuilder.NOT_FOUND) {
                                   return onSuccess(packet, null, statusCode, responseHeaders);
                                 }
@@ -271,18 +271,18 @@ public class PodWatcher extends Watcher<V1Pod>
                                   V1Pod result,
                                   int statusCode,
                                   Map<String, List<String>> responseHeaders) {
-                                LOGGER.entering();
+                                LOGGER.info("zzzpw- onSuccess()");
                                 if (testPod(result)) {
                                   if (didResume.compareAndSet(false, true)) {
                                     unregister(metadata, ready);
-                                    LOGGER.exiting("fiber.resume(packet)");
+                                    LOGGER.info("zzzpw- fiber.resume(packet)");
                                     fiber.resume(packet);
                                   }
                                   LOGGER.info(
-                                      "zzz- WaitForPodStatusStep$ResponseStep didResume is "
+                                      "zzzpw- WaitForPodStatusStep$ResponseStep didResume is "
                                           + didResume);
                                 }
-                                LOGGER.exiting("doNext(packet) " + getNext());
+                                LOGGER.info("zzzpw- doNext(packet) " + getNext());
                                 return doNext(packet);
                               }
                             }),

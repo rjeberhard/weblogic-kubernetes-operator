@@ -195,6 +195,7 @@ abstract class Watcher<T> {
   }
 
   private void handleErrorResponse(Watch.Response<T> item) {
+    LOGGER.entering();
     V1Status status = item.status;
     if (status == null) {
       // The kubernetes client parsing logic can mistakenly parse a status as a type
@@ -204,6 +205,13 @@ abstract class Watcher<T> {
     } else if (status.getCode() == HTTP_GONE) {
       resourceVersion = computeNextResourceVersionFromMessage(status);
     }
+    LOGGER.warning(
+        "zzzz- Watcher.handleErrorResponse() resourceVersion="
+            + resourceVersion
+            + ", item.object is \n"
+            + item.object
+            + "\n item.status is \n"
+            + item.status);
   }
 
   private long computeNextResourceVersionFromMessage(V1Status status) {
