@@ -199,6 +199,10 @@ public class PodWatcher extends Watcher<V1Pod>
     return new WaitForPodDeleteStep(pod, next);
   }
 
+  static {
+    System.out.println("zzz- ============== debug PodWatcher in use ===========");
+  }
+
   private abstract class WaitForPodStatusStep extends Step {
     private final V1Pod pod;
 
@@ -211,7 +215,7 @@ public class PodWatcher extends Watcher<V1Pod>
     public NextAction apply(Packet packet) {
       LOGGER.entering();
       LOGGER.info(
-          "zzz- WaitForPodStatusStep.apply(serverName="
+          "zzzpw- WaitForPodStatusStep.apply(serverName="
               + PodHelper.getPodServerName(pod)
               + "), PodHelper.isDeleting(pod) is "
               + PodHelper.isDeleting(pod)
@@ -219,7 +223,7 @@ public class PodWatcher extends Watcher<V1Pod>
               + PodHelper.getReadyStatus(pod));
 
       if (!PodHelper.isDeleting(pod) && PodHelper.getReadyStatus(pod)) {
-        LOGGER.exiting("doNext() " + getNext());
+        LOGGER.info("zzzpw- 1 apply calling doNext() " + getNext());
         return doNext(packet);
       }
 
@@ -228,7 +232,7 @@ public class PodWatcher extends Watcher<V1Pod>
       log(metadata);
 
       final AtomicBoolean didResume = new AtomicBoolean(false);
-      LOGGER.info("zzzpw- returning doSuspend(), didResume is " + didResume);
+      LOGGER.info("zzzpw- 231 returning doSuspend(), didResume is " + didResume);
       return doSuspend(
           (fiber) -> {
             Runnable ready =
@@ -258,7 +262,7 @@ public class PodWatcher extends Watcher<V1Pod>
                                   int statusCode,
                                   Map<String, List<String>> responseHeaders) {
                                 LOGGER.entering();
-                                LOGGER.info("zzzpw- onFailure() statusCode is " + statusCode);
+                                LOGGER.info("zzzpw- 261 onFailure() statusCode is " + statusCode);
                                 if (statusCode == CallBuilder.NOT_FOUND) {
                                   return onSuccess(packet, null, statusCode, responseHeaders);
                                 }
@@ -271,18 +275,18 @@ public class PodWatcher extends Watcher<V1Pod>
                                   V1Pod result,
                                   int statusCode,
                                   Map<String, List<String>> responseHeaders) {
-                                LOGGER.info("zzzpw- onSuccess()");
+                                LOGGER.info("zzzpw- 274 onSuccess()");
                                 if (testPod(result)) {
                                   if (didResume.compareAndSet(false, true)) {
                                     unregister(metadata, ready);
-                                    LOGGER.info("zzzpw- fiber.resume(packet)");
+                                    LOGGER.info("zzzpw- 278 fiber.resume(packet)");
                                     fiber.resume(packet);
                                   }
                                   LOGGER.info(
-                                      "zzzpw- WaitForPodStatusStep$ResponseStep didResume is "
+                                      "zzzpw-282  WaitForPodStatusStep$ResponseStep didResume is "
                                           + didResume);
                                 }
-                                LOGGER.info("zzzpw- doNext(packet) " + getNext());
+                                LOGGER.info("zzzpw- 285 doNext(packet) " + getNext());
                                 return doNext(packet);
                               }
                             }),

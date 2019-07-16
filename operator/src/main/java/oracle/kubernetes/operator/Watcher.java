@@ -206,7 +206,7 @@ abstract class Watcher<T> {
       resourceVersion = computeNextResourceVersionFromMessage(status);
     }
     LOGGER.warning(
-        "zzzz- Watcher.handleErrorResponse() resourceVersion="
+        "zzzw- Watcher.handleErrorResponse() resourceVersion="
             + resourceVersion
             + ", item.object is \n"
             + item.object
