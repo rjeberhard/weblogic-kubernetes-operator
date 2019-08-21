@@ -633,9 +633,9 @@ public abstract class PodStepContext extends StepContextBase {
       addEnvVar(vars, "ADMIN_PORT_SECURE", "true");
     }
     if (isAdminServerProtocolChannelSecure()) {
-      // This env variable affects whether the "AdminURL" property in NM startup.properties is secure(https)
-      // WebLogic Node Manager then sets the ADMIN_URL env variable(based on the "AdminURL") before starting
-      // the managed server
+      // This env variable is used to set the protocol(https/http) in the "AdminURL" property in NM startup.properties.
+      // WebLogic Node Manager then sets the ADMIN_URL env variable(based on the "AdminURL") 
+      // before starting the managed server.
       addEnvVar(vars, "ADMIN_SERVER_PORT_SECURE", "true");
     }
     addEnvVar(vars, "SERVER_NAME", getServerName());
