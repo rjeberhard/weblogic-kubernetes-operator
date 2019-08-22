@@ -265,8 +265,6 @@ EOF
   fi
 fi
 
-
-
 ###############################################################################
 #
 #  Set additional env vars required to start NM

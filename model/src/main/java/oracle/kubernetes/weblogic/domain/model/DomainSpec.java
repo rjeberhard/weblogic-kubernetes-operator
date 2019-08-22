@@ -4,6 +4,7 @@
 
 package oracle.kubernetes.weblogic.domain.model;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -196,6 +197,9 @@ public class DomainSpec extends BaseConfiguration {
   @Description("Configuration for the clusters.")
   protected List<Cluster> clusters = new ArrayList<>();
 
+  @Description("Experimental feature configurations.")
+  private Experimental experimental;
+
   /**
    * Adds a Cluster to the DomainSpec.
    *
@@ -376,7 +380,13 @@ public class DomainSpec extends BaseConfiguration {
   }
 
   public void setLogHome(String logHome) {
-    this.logHome = logHome;
+    this.logHome = Optional.ofNullable(logHome).map(this::validatePath).orElse(null);
+  }
+
+  private String validatePath(String s) {
+    if (s.isBlank()) return null;
+    if (s.endsWith(File.separator)) return s;
+    return s + File.separator;
   }
 
   /**
@@ -385,7 +395,7 @@ public class DomainSpec extends BaseConfiguration {
    * @since 2.0
    * @return log home enabled
    */
-  boolean getLogHomeEnabled() {
+  boolean isLogHomeEnabled() {
     return Optional.ofNullable(logHomeEnabled).orElse(!isDomainHomeInImage());
   }
 
@@ -502,6 +512,30 @@ public class DomainSpec extends BaseConfiguration {
     this.configOverrideSecrets = overridesSecretNames;
   }
 
+  /**
+   * Test if the domain is deployed under Istio environment.
+   *
+   * @return istioEnabled
+   */
+  boolean isIstioEnabled() {
+    return Optional.ofNullable(experimental)
+        .map(Experimental::getIstio)
+        .map(Istio::getEnabled)
+        .orElse(false);
+  }
+
+  /**
+   * The WebLogic readiness port used under Istio environment.
+   *
+   * @return readinessPort
+   */
+  int getIstioReadinessPort() {
+    return Optional.ofNullable(experimental)
+        .map(Experimental::getIstio)
+        .map(Istio::getReadinessPort)
+        .orElse(8888);
+  }
+
   @Override
   public String toString() {
     ToStringBuilder builder =
@@ -523,7 +557,8 @@ public class DomainSpec extends BaseConfiguration {
             .append("logHomeEnabled", logHomeEnabled)
             .append("includeServerOutInPodLog", includeServerOutInPodLog)
             .append("configOverrides", configOverrides)
-            .append("configOverrideSecrets", configOverrideSecrets);
+            .append("configOverrideSecrets", configOverrideSecrets)
+            .append("experimental", experimental);
 
     return builder.toString();
   }
@@ -549,7 +584,8 @@ public class DomainSpec extends BaseConfiguration {
             .append(logHomeEnabled)
             .append(includeServerOutInPodLog)
             .append(configOverrides)
-            .append(configOverrideSecrets);
+            .append(configOverrideSecrets)
+            .append(experimental);
 
     return builder.toHashCode();
   }
@@ -583,7 +619,8 @@ public class DomainSpec extends BaseConfiguration {
             .append(logHomeEnabled, rhs.logHomeEnabled)
             .append(includeServerOutInPodLog, rhs.includeServerOutInPodLog)
             .append(configOverrides, rhs.configOverrides)
-            .append(configOverrideSecrets, rhs.configOverrideSecrets);
+            .append(configOverrideSecrets, rhs.configOverrideSecrets)
+            .append(experimental, rhs.experimental);
 
     return builder.isEquals();
   }

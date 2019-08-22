@@ -405,8 +405,16 @@ checkWebLogicVersion()
 #
 function getAdminUrl() {
   admin_protocol="http"
+  if [ "${ISTIO_ENABLED}" = "true" ]; then
+    admin_protocol="t3"
+  fi 
+
   if [ "${ADMIN_SERVER_PORT_SECURE}" = "true" ]; then
-    admin_protocol="https"
+    if [ "${ISTIO_ENABLED}" = "true" ]; then
+      admin_protocol="t3s"
+    else
+      admin_protocol="https"
+    fi
   fi
   echo ${admin_protocol}://${AS_SERVICE_NAME}:${ADMIN_PORT}
 }
