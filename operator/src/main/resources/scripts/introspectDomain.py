@@ -795,6 +795,7 @@ class DomainSeedGenerator(Generator):
 
   def zipdir_base64out(self):
     if self.domain_home:
+      trace('zipping up domain ' + self.domain_home)
       os.path.walk(self.domain_home, self.dir_visit, self.ziph)
       self.ziph.close()
       domain_data = self.env.readBinaryFile(self.domainzip)
@@ -802,6 +803,7 @@ class DomainSeedGenerator(Generator):
       for s in base64.encodestring(domain_data).splitlines():
         b64 = b64 + s
       self.writeln(b64)
+      trace('done zipping up domain ')
 
 
   def dir_visit(self, ziph, dir, files):
@@ -811,6 +813,7 @@ class DomainSeedGenerator(Generator):
         if os.path.dirname(file_name) in self.skiplist:
           continue
         ziph.write(file_name)
+        trace('writing ' + str(file_name))
 
 
 class InventoryMD5Generator(Generator):
@@ -1284,13 +1287,18 @@ class DomainIntrospector(SecretManager):
       BootPropertiesGenerator(self.env).generate()
       UserConfigAndKeyGenerator(self.env).generate()
       if os.path.exists('/u01/model_home'):
+        trace('Calculating MD5 of merged domain model')
         InventoryMD5Generator(self.env, self.env.MERGED_MODEL_FILE,
                               self.env.DOMAIN_HOME+"/wlsdeploy/domain_model.json").generate()
+        trace('Generating domain seed')
         DomainSeedGenerator(self.env).generate()
+        trace('Calculating MD5 of artifacts in image')
         InventoryMD5Generator(self.env, self.env.INVENTORY_IMAGE_MD5, '/tmp/inventory_image.md5').generate()
+        trace('Calculating MD5 of artifacts in external cm')
         InventoryMD5Generator(self.env, self.env.INVENTORY_CM_MD5, '/tmp/inventory_cm.md5').generate()
+        trace('Calculating MD5 of artifacts in wdt passphrase')
         InventoryMD5Generator(self.env, self.env.INVENTORY_PASSPHRASE_MD5, '/tmp/inventory_passphrase.md5').generate()
-
+        trace('Done handling model in image artifacts')
     CustomSitConfigIntrospector(self.env).generateAndValidate()
     #WDTConfigIntrospector(self.env).generateAndValidate()
 
